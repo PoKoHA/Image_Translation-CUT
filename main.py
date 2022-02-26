@@ -2,6 +2,7 @@ import argparse
 import os
 import random
 import time
+import datetime
 import warnings
 import numpy as np
 
@@ -162,35 +163,25 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.gpu is not None:
         print("Use GPU: {} for training".format(args.gpu))
 
-    if args.distributed:  # 초기화
-        if args.dist_url == "env://" and args.rank == -1:  # RANK 지정 X 경우
+    if args.distributed:
+        if args.dist_url == "env://" and args.rank == -1:
             args.rank = int(os.environ["RANK"])
         if args.multiprocessing_distributed:
-            # 멀티 프로세싱을 하기 위해서 rank는 모든 프로세스 중의 global rank를 필요함
             args.rank = args.rank * ngpus_per_node + gpu
             print("rank 확인: ", args.rank)
-            # 순서대로 rank를 지정해줌 e.g)node 2 with 4gpu
-            # node=0 -> rank[0, 1, 2, 3] node=1 -> rank[4, 5, 6, 7]
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
-        # torch.distributed.init_process_group(backend, init_method=None, timeout=datetime.timedelta(0, 1800), world_size=-1, rank=-1, store=None, group_name=''
-        # distributed process group을 초기화, distributed package또한
 
-    if not torch.cuda.is_available():  # GPU가 없을 시
+    if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:
-        # 멀티프로세싱 distributed 경우, 반드시 단일 장치범위(single device scope) 지정해야함
-        # 그렇게 안하면 사용 가능한 모든 device를 사용
         if args.gpu is not None:
-            torch.cuda.set_device(args.gpu)  # 특정 gpu 설정
+            torch.cuda.set_device(args.gpu)
             generator.cuda(args.gpu)
             discriminator.cuda(args.gpu)
             patchMLP.cuda(args.gpu)
 
-            # per process와 DistributedDataparallel=> single GPU 사용 할 때
-            # batchsize를 가지고 있는 총 gpu을 기점으로 나눠 줄 필요가 있다.
             args.batch_size = int(args.batch_size / ngpus_per_node)
-            # workers: batch generation 때 사용 할 cpu thread 수
             args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
 
             generator = nn.parallel.DistributedDataParallel(generator, device_ids=[args.gpu])
@@ -198,7 +189,6 @@ def main_worker(gpu, ngpus_per_node, args):
             patchMLP = nn.parallel.DistributedDataParallel(patchMLP, device_ids=[args.gpu])
 
         else:
-            # device_ids를 설정해주지 않으면 모든 사용가능한 GPU로 batchsize 나누고 할당
             generator.cuda()
             discriminator.cuda()
             patchMLP.cuda()
@@ -208,15 +198,12 @@ def main_worker(gpu, ngpus_per_node, args):
             patchMLP = nn.parallel.DistributedDataParallel(patchMLP)
 
     elif args.gpu is not None:
-        # distributed X, Dataparallel X
-        print("HERE")
         torch.cuda.set_device(args.gpu)
         generator = generator.cuda(args.gpu)
         discriminator = discriminator.cuda(args.gpu)
         patchMLP = patchMLP.cuda(args.gpu)
 
     else:
-        # DataParallel은 사용가능한 gpu에다가 batchsize을 나누고 할당
         generator = nn.DataParallel(generator).cuda(args.gpu)
         discriminator = nn.DataParallel(discriminator).cuda(args.gpu)
         patchMLP = nn.DataParallel(patchMLP).cuda(args.gpu)
@@ -401,6 +388,8 @@ def train(args, dataloader, epoch, generator, discriminator, patchMLP,
     scheduler_F.step()
     lr = optimizer_G.param_groups[0]['lr']
     print('learning rate = %.7f' % lr)
+    elapse = datetime.timedelta(seconds=time.time() - end)
+    print(f"걸린 시간: ", elapse)
     sample_images(epoch, real_A, real_B, generator)
 
 

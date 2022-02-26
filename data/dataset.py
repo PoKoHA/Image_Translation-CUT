@@ -24,8 +24,7 @@ class ImageDataset(torch.utils.data.Dataset):
         else:
             image_B = Image.open(self.files_B[index % len(self.files_B)])
 
-        # grayscle 에서 rgb로 전환 (아니면 .convert('RGB')도 가능)
-        if image_A.mode != "RGB": # 즉 image_A가 흑백이라면
+        if image_A.mode != "RGB":
             image_A = to_rgb(image_A)
         if image_B.mode != "RGB":
             image_B = to_rgb(image_B)
@@ -37,13 +36,11 @@ class ImageDataset(torch.utils.data.Dataset):
 
         return {"A": image_A, "B": image_B}
 
-    def __len__(self): # len 실행 시 실제로 __len__메서드 호출
+    def __len__(self):
         return max(len(self.files_A), len(self.files_B))
 
-    # A와B 파일을 따로따로 return
+
 def to_rgb(image):
-    # Image.new(mode, szie, color) : 새로운 이미지 생성
     rgb_image = Image.new("RGB", image.size)
-    # .paste(추가할 이미지, 붙일 위치(가로, 세로)): 이미지붙이기
     rgb_image.paste(image)
     return rgb_image
