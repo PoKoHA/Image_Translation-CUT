@@ -33,7 +33,10 @@
 
 # Result
 
-추후 기재
+| **Source A** | **Fake_B** | **Target B** |
+|-------------|------------|--------------|
+|![RealA](https://user-images.githubusercontent.com/76771847/155834413-1cb2a17e-8c22-4090-89f2-3f768ecf5e1a.png)| ![fake_B](https://user-images.githubusercontent.com/76771847/155834428-fe91e19e-9e58-4930-af1a-d067dadbec81.png)| ![REALB](https://user-images.githubusercontent.com/76771847/155834431-c0cbca8d-567c-44c3-9d7a-e5adcd8d25d9.png)|
+
 
 # Implement
 
