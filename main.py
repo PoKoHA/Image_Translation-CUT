@@ -160,18 +160,6 @@ def main_worker(gpu, ngpus_per_node, args):
     patchMLP = patchSample(use_mlp=True, init_type=args.init_type, init_gain=args.init_gain,
                            nc=args.netF_nc)
 
-    if args.gpu is not None:
-        print("Use GPU: {} for training".format(args.gpu))
-
-    if args.distributed:
-        if args.dist_url == "env://" and args.rank == -1:
-            args.rank = int(os.environ["RANK"])
-        if args.multiprocessing_distributed:
-            args.rank = args.rank * ngpus_per_node + gpu
-            print("rank 확인: ", args.rank)
-        dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                                world_size=args.world_size, rank=args.rank)
-
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
     elif args.distributed:

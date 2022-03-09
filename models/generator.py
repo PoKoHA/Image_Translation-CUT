@@ -68,6 +68,7 @@ class Generator(nn.Module):
         self.model = nn.Sequential(*model)
 
     def forward(self, input, layers=[], encode_only=False):
+        # layers = [0, 4, 8, 12, 16]
         if -1 in layers:
             layers.append(len(self.model))
         if len(layers) > 0:
@@ -91,4 +92,3 @@ class Generator(nn.Module):
             """Standard forward"""
             fake = self.model(input)
             return fake
-

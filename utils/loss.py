@@ -17,9 +17,14 @@ class PatchNCELoss(nn.Module):
         dim = feat_q.shape[1]
         feat_k = feat_k.detach()
 
+        # print("1", feat_q.size()) [256, 256]
+        # print("2", feat_k.size()) [256, 256]
+
         # positive logit
         l_pos = torch.bmm(feat_q.view(num_patchees, 1, -1), feat_k.view(num_patchees, -1, 1))
+        # print("3", l_pos.size()) [256, 1, 1]
         l_pos = l_pos.view(num_patchees, 1)
+        # print("4", l_pos.size()) [256, 1]
 
         # negative logit
         # 논문) 외부 Image들로부터 Negative Patch를 구하는 것보다 내부 이미지에서 구하는 것이 더 좋은 효과를 줌.
@@ -33,16 +38,21 @@ class PatchNCELoss(nn.Module):
         feat_q = feat_q.view(batch_dim_for_bmm, -1, dim)
         feat_k = feat_k.view(batch_dim_for_bmm, -1, dim)
         npatches = feat_q.size(1)
+        # print("5", feat_q.size()) [1, 256, 256]
         l_neg_curbatch = torch.bmm(feat_q, feat_k.transpose(2, 1))
+        # print("6", l_neg_curbatch.size()) [1, 256, 256]
 
         diagonal = torch.eye(npatches, device=feat_q.device, dtype=self.mask_dtype)[None, :, :]
+        # print(diagonal.size()) # [1, 256, 256]
         # exp(-10)적용 / cross entropy에 Exp 포함되어 있음
         l_neg_curbatch.masked_fill_(diagonal, -10.0)
         l_neg = l_neg_curbatch.view(-1, npatches)
-
+        # print(l_neg.size(),l_pos.size())
+        # torch.Size([256, 256]) torch.Size([256, 1])
         out = torch.cat((l_pos, l_neg), dim=1) / self.args.nce_T # default: 0.07
-
+        # print("8", out.size()) [256, 257]
         loss = self.cross_entropy(out, torch.zeros(out.size(0), dtype=torch.long, device=feat_q.device))
+        # print(out.size(), torch.zeros(out.size(0)).size()) # [256, 257] / [256]
 
         return loss
 
