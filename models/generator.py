@@ -78,7 +78,7 @@ class Generator(nn.Module):
                 # print(layer_id, layer)
                 feat = layer(feat)
                 if layer_id in layers:
-                    # print("%d: adding the output of %s %d" % (layer_id, layer.__class__.__name__, feat.size(1)))
+                    print("%d: adding the output of %s %d" % (layer_id, layer.__class__.__name__, feat.size(1)))
                     feats.append(feat)
                 else:
                     # print("%d: skipping %s %d" % (layer_id, layer.__class__.__name__, feat.size(1)))

@@ -348,7 +348,7 @@ def train(args, dataloader, epoch, generator, discriminator, patchMLP,
         pred_fake_ = discriminator(fake_)
         loss_G_GAN = criterion_GAN(pred_fake_, True).mean() * args.lambda_GAN
 
-        loss_NCE = calculate_NCE_loss(args, real_A, real_B, generator, patchMLP, nce_layers, flipped_for_equivariance,
+        loss_NCE = calculate_NCE_loss(args, real_A, fake_B, generator, patchMLP, nce_layers, flipped_for_equivariance,
                                       criterion_NCE)
         loss_NCE_Y = calculate_NCE_loss(args, real_B, idt_B, generator, patchMLP, nce_layers, flipped_for_equivariance,
                                         criterion_NCE)
@@ -415,7 +415,7 @@ def data_dependent_initialize(dataloader, generator, discriminator, patchMLP, cr
     pred_fake_ = discriminator(fake_)
     loss_G_GAN = criterion_GAN(pred_fake_, True).mean() * args.lambda_GAN
 
-    loss_NCE = calculate_NCE_loss(args, real_A, real_B, generator, patchMLP, nce_layers, flipped_for_equivariance,
+    loss_NCE = calculate_NCE_loss(args, real_A, fake_B, generator, patchMLP, nce_layers, flipped_for_equivariance,
                                   criterion_NCE)
     loss_NCE_Y = calculate_NCE_loss(args, real_B, idt_B, generator, patchMLP, nce_layers, flipped_for_equivariance,
                                   criterion_NCE)
