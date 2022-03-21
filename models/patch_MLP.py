@@ -19,6 +19,20 @@ class patchSample(nn.Module):
         self.init_type = init_type
         self.init_gain = init_gain
 
+        """nn.Dataparallel nce_layers=[0, 4, 8, 12, 16]기준"""
+        # mlp = nn.Sequential(*[nn.Linear(3, self.nc), nn.ReLU(), nn.Linear(self.nc, self.nc)]).cuda(self.args.gpu)
+        # setattr(self, 'mlp_%d' % 0, mlp)
+        # mlp = nn.Sequential(*[nn.Linear(128, self.nc), nn.ReLU(), nn.Linear(self.nc, self.nc)]).cuda(self.args.gpu)
+        # setattr(self, 'mlp_%d' % 1, mlp)
+        # mlp = nn.Sequential(*[nn.Linear(256, self.nc), nn.ReLU(), nn.Linear(self.nc, self.nc)]).cuda(self.args.gpu)
+        # setattr(self, 'mlp_%d' % 2, mlp)
+        # mlp = nn.Sequential(*[nn.Linear(256, self.nc), nn.ReLU(), nn.Linear(self.nc, self.nc)]).cuda(self.args.gpu)
+        # setattr(self, 'mlp_%d' % 3, mlp)
+        # mlp = nn.Sequential(*[nn.Linear(256, self.nc), nn.ReLU(), nn.Linear(self.nc, self.nc)]).cuda(self.args.gpu)
+        # setattr(self, 'mlp_%d' % 4, mlp)
+        # init_net(self, self.init_type, self.init_gain)
+        # self.mlp_init = True
+
     def create_mlp(self, feats):
         for mlp_id, feat in enumerate(feats):
             input_nc = feat.shape[1]

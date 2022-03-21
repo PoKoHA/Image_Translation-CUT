@@ -121,16 +121,16 @@ def main():
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
 
     ngpus_per_node = torch.cuda.device_count()
-    if args.multiprocessing_distributed:
-        # Since we have ngpus_per_node processes per node, the total world_size
-        # needs to be adjusted accordingly
-        args.world_size = ngpus_per_node * args.world_size
-        # Use torch.multiprocessing.spawn to launch distributed processes: the
-        # main_worker process function
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
-    else:
-        # Simply call main_worker function
-        main_worker(args.gpu, ngpus_per_node, args)
+    # if args.multiprocessing_distributed:
+    #     Since we have ngpus_per_node processes per node, the total world_size
+    # needs to be adjusted accordingly
+    # args.world_size = ngpus_per_node * args.world_size
+    # Use torch.multiprocessing.spawn to launch distributed processes: the
+    # main_worker process function
+    # mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
+    # else:
+    # Simply call main_worker function
+    main_worker(args.gpu, ngpus_per_node, args)
 
 
 def main_worker(gpu, ngpus_per_node, args):
@@ -141,15 +141,15 @@ def main_worker(gpu, ngpus_per_node, args):
     if args.gpu is not None:
         print("Use GPU: {} for training".format(args.gpu))
 
-    if args.distributed:
-        if args.dist_url == "env://" and args.rank == -1:
-            args.rank = int(os.environ["RANK"])
-        if args.multiprocessing_distributed:
-            # For multiprocessing distributed training, rank needs to be the
-            # global rank among all the processes
-            args.rank = args.rank * ngpus_per_node + gpu
-        dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                                world_size=args.world_size, rank=args.rank)
+    # if args.distributed:
+    #     if args.dist_url == "env://" and args.rank == -1:
+    #         args.rank = int(os.environ["RANK"])
+    #     if args.multiprocessing_distributed:
+    #         # For multiprocessing distributed training, rank needs to be the
+    #         # global rank among all the processes
+    #         args.rank = args.rank * ngpus_per_node + gpu
+    #     dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+    #                             world_size=args.world_size, rank=args.rank)
 
     # define models.
     generator = Generator(input_nc=args.input_nc, output_nc=args.output_nc, ngf=args.ngf, norm_layer=args.normG,
@@ -162,28 +162,28 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
-    elif args.distributed:
-        if args.gpu is not None:
-            torch.cuda.set_device(args.gpu)
-            generator.cuda(args.gpu)
-            discriminator.cuda(args.gpu)
-            patchMLP.cuda(args.gpu)
-
-            args.batch_size = int(args.batch_size / ngpus_per_node)
-            args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
-
-            generator = nn.parallel.DistributedDataParallel(generator, device_ids=[args.gpu])
-            discriminator = nn.parallel.DistributedDataParallel(discriminator, device_ids=[args.gpu])
-            patchMLP = nn.parallel.DistributedDataParallel(patchMLP, device_ids=[args.gpu])
-
-        else:
-            generator.cuda()
-            discriminator.cuda()
-            patchMLP.cuda()
-
-            generator = nn.parallel.DistributedDataParallel(generator)
-            discriminator = nn.parallel.DistributedDataParallel(discriminator)
-            patchMLP = nn.parallel.DistributedDataParallel(patchMLP)
+    # elif args.distributed:
+    #     if args.gpu is not None:
+    #         torch.cuda.set_device(args.gpu)
+    #         generator.cuda(args.gpu)
+    #         discriminator.cuda(args.gpu)
+    #         patchMLP.cuda(args.gpu)
+    #
+    #         args.batch_size = int(args.batch_size / ngpus_per_node)
+    #         args.workers = int((args.workers + ngpus_per_node - 1) / ngpus_per_node)
+    #
+    #         generator = nn.parallel.DistributedDataParallel(generator, device_ids=[args.gpu])
+    #         discriminator = nn.parallel.DistributedDataParallel(discriminator, device_ids=[args.gpu])
+    #         patchMLP = nn.parallel.DistributedDataParallel(patchMLP, device_ids=[args.gpu])
+    #
+    #     else:
+    #         generator.cuda()
+    #         discriminator.cuda()
+    #         patchMLP.cuda()
+    #
+    #         generator = nn.parallel.DistributedDataParallel(generator)
+    #         discriminator = nn.parallel.DistributedDataParallel(discriminator)
+    #         patchMLP = nn.parallel.DistributedDataParallel(patchMLP)
 
     elif args.gpu is not None:
         torch.cuda.set_device(args.gpu)
@@ -191,10 +191,13 @@ def main_worker(gpu, ngpus_per_node, args):
         discriminator = discriminator.cuda(args.gpu)
         patchMLP = patchMLP.cuda(args.gpu)
 
-    else:
-        generator = nn.DataParallel(generator).cuda(args.gpu)
-        discriminator = nn.DataParallel(discriminator).cuda(args.gpu)
-        patchMLP = nn.DataParallel(patchMLP).cuda(args.gpu)
+    """
+    nn.Dataparallel 사용-> PatchMLP에서 init에 nn.Linear를 선언해주고 사용해야함
+    """
+    # else:
+    #     generator = nn.DataParallel(generator).cuda(args.gpu)
+    #     discriminator = nn.DataParallel(discriminator).cuda(args.gpu)
+    #     patchMLP = nn.DataParallel(patchMLP).cuda(args.gpu)
 
     # apply init_weight
     generator = init_net(generator, args.init_type, args.init_gain, initialize_weights=True)
@@ -218,15 +221,15 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # dataset
     dataset = ImageDataset(root=args.dataroot, unaligned=True, mode='train', args=args)
-    if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(dataset)
-        print("Sampler")
-    else:
-        train_sampler = None
+    # if args.distributed:
+    #     train_sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+    #     print("Sampler")
+    # else:
+    #     train_sampler = None
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size,
-                                             shuffle=(train_sampler is None),
-                                             num_workers=args.workers, pin_memory=True, sampler=train_sampler,
+                                             shuffle=True,
+                                             num_workers=args.workers, pin_memory=True,
                                              drop_last=True)
 
     # CUT 저자) netF(patchMLP)는 generator의 인코더 부분의 중간 feature map 추출 형태로 정의.
@@ -273,8 +276,8 @@ def main_worker(gpu, ngpus_per_node, args):
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     for epoch in range(args.start_epoch, args.epochs + args.epochs_decay):
-        if args.distributed:
-            train_sampler.set_epoch(epoch)
+        # if args.distributed:
+        #     train_sampler.set_epoch(epoch)
 
         train(args, dataloader, epoch, generator, discriminator, patchMLP,
               optimizer_D, optimizer_G, optimizer_F,

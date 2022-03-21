@@ -78,7 +78,8 @@ class Generator(nn.Module):
                 # print(layer_id, layer)
                 feat = layer(feat)
                 if layer_id in layers:
-                    print("%d: adding the output of %s %d" % (layer_id, layer.__class__.__name__, feat.size(1)))
+                    # print("%d: adding the output of %s %d" % (layer_id, layer.__class__.__name__, feat.size(1)))
+                    print(feat.size())
                     feats.append(feat)
                 else:
                     # print("%d: skipping %s %d" % (layer_id, layer.__class__.__name__, feat.size(1)))
@@ -92,3 +93,10 @@ class Generator(nn.Module):
             """Standard forward"""
             fake = self.model(input)
             return fake
+
+
+if __name__ == "__main__":
+    t = torch.randn(2, 3, 256, 256).cuda()
+    a = Generator(input_nc=3, output_nc=3).cuda()
+    l = [0, 4, 8, 12, 16]
+    print(len(a(t, l ,True)))

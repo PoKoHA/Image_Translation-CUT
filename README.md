@@ -1,3 +1,5 @@
+- Distributed 지원X
+
 # Contrastive Learning for Unpaired Image-to-Image Translation
 
 많은 Unpaired Image-to-Image Translation(e.g. CycleGAN, UNIT, MUNIT)에서는 **Cycle Consistency**를 사용하여 수행함.
